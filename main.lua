@@ -1,4 +1,4 @@
 local Calcifer = require "calcifer"
-import = Calcifer
+import = Calcifer.import
 
 require "sokoban/sokoban_main"

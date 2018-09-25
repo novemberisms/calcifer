@@ -7,7 +7,7 @@ final_class "Game"
 static { instance }
 static { getInstance = function()
 	if instance then return instance end
-	instance = Game()
+	instance = Game() -- we can access private functions and properties from a static function
 	return instance
 end }
 
@@ -21,7 +21,7 @@ private { state_name }
 
 
 --=============================================================================
--- a private function so we can't directly instantiate it unless we use getInstance
+-- a private function so we can't directly instantiate it unless we use Game.getInstance()
 private { new = function()
 	state_map = {
 		titlescreen = TitleState(),
@@ -51,10 +51,12 @@ public { getStateName = function() return state_name end }
 public { getState = function() return state_object end }
 
 public { setState = function(new_state_name)
+	-- see if a state actually exists for the given state name
 	local new_state = state_map[new_state_name]
 	if not new_state then
 		error("Invalid state name " .. new_state_name, 2)
 	end
+	-- we need to store this so that we can pass it in to the onEnter() method of the new state
 	local old_state_name = state_name or ""
 	-- if we have an existing state, call onExit
 	if state_object then

@@ -1,5 +1,7 @@
 return {
 	name = "Test Level",
+	width = 5,
+	height = 5,
 	keys = {
 		[1] = "Wall",
 		[2] = "Player",

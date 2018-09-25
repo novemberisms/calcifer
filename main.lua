@@ -1,4 +1,9 @@
 local Calcifer = require "calcifer"
 import = Calcifer.import
 
-require "sokoban/sokoban_main"
+local Dog = import "samples/dog"
+local d = Dog("Spot")
+
+d.playSound()
+
+-- require "sokoban/sokoban_main"

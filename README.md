@@ -4,7 +4,7 @@
 
 Come take a look!
 
-![](assets\playersample.png)
+![](assets/playersample.png)
 
 Yes, that's all vanilla lua. 
 
@@ -16,7 +16,7 @@ Most of us have. And this is exacerbated in lua because it does not warn you if 
 
 With **`Calcifer`**, that is a thing of the past. It's impossible to accidentally declare global variables from within a class! In fact, it will raise an error if you have not declared a variable before.
 
-![](assets\sample_animal_error.png)
+![](assets/sample_animal_error.png)
 
 It's still possible to declare a global variable if you *need* to, but you have to use the following syntax
 

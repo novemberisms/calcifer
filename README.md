@@ -40,7 +40,7 @@ Well **`Calcifer`** will simply not allow you to access private members of a cla
 
 All you need is the file `calcifer.lua` file included with this repository along with its `CALCIFER-LICENSE`file 
 
-You need the license file for legal reasons. But don't worry! Calcifer is MIT-Licensed. You can basically do anything you want with the code for any purpose. Personal or Commercial. You just can't sue me if your computer inexplicably blows up while you're running your game and you need someone to blame, and you have to include the license in your game folder somewhere. That's all!
+You need the license file for legal reasons. But don't worry! Calcifer is MIT-Licensed. You can basically do anything you want with the code for any purpose. Personal or Commercial. You just can't sue me if your computer inexplicably blows up while you're running your game, and you have to include the license in your game folder somewhere. That's all!
 
 Copy and paste `calcifer.lua` and `CALCIFER-LICENSE` somewhere in your game directory. And then before you can load any classes, you have to write the following
 

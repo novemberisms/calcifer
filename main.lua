@@ -4,6 +4,4 @@ import = Calcifer.import
 local Dog = import "samples/dog"
 local d = Dog("Spot")
 
-d.playSound()
-
--- require "sokoban/sokoban_main"
+print("legs:", d.legs)

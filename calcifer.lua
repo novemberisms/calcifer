@@ -5,6 +5,8 @@ local class_mt = {}
 setmetatable(Calcifer, Calcifer_mt)
 
 local UNDEFINED = {}
+local VIRTUAL = {}
+
 local CLASS_MEMO = {}
 
 local extend_class
@@ -87,7 +89,6 @@ function Calcifer_mt:__call(path_to_class)
 						if class.__private[varname] ~= nil or class.__public[varname] ~= nil then	
 							error("Cannot redefine field '" .. varname .. "' as it is already defined here or in a parent. Use private_override {}", 2)
 						end
-						-- class.__private[t[varname]] = UNDEFINED
 						class.__private[varname] = UNDEFINED
 						return
 					end
@@ -112,11 +113,10 @@ function Calcifer_mt:__call(path_to_class)
 						if class.__private[varname] ~= nil or class.__public[varname] ~= nil then
 							error("Cannot redefine field '" .. varname .. "' as it is already defined here or in a parent. Use public_override {}", 2)
 						end
-						-- class.__public[t[varname]] = UNDEFINED     
 						class.__public[varname] = UNDEFINED                
 						return                                                     
 					end
-					-- public {a = 1, b = 2}                                       
+					-- public {a = 1, b = 2}
 					for k, v in pairs(a) do
 						if class.__private[k] ~= nil or class.__public[k] ~= nil then
 							if k ~= "new" then
@@ -148,7 +148,9 @@ function Calcifer_mt:__call(path_to_class)
 						if varname == "new" then error("No need to use override for constructor (this is a special case)", 2) end
 						-- are you accidentally overriding a private field as public?
 						if class.__private[varname] ~= nil then
-							error("Cannot override a private field as public [" .. varname .. "]", 2)
+							-- you can override a private field as public
+							class.__public[varname] = UNDEFINED
+							class.__private[varname] = nil
 						end
 						-- does it even exist?
 						if class.__public[varname] == nil then
@@ -163,7 +165,9 @@ function Calcifer_mt:__call(path_to_class)
 						if k == "new" then error("No need to use override for constructor (this is a special case)", 2) end
 						-- are you accidentally overriding a private field as public?
 						if class.__private[k] ~= nil then
-							error("Cannot override a private field as public [" .. k .. "]", 2)
+							-- you can override a private field as public
+							class.__public[k] = v
+							class.__private[k] = nil
 						end
 						-- does it even exist?
 						if class.__public[k] == nil then
@@ -208,6 +212,40 @@ function Calcifer_mt:__call(path_to_class)
 					end
 
 				end
+			elseif k == "public_virtual" then
+				if not class.__abstract then
+					error("Virtual fields can only exist on abstract classes. Use abstract_class instead of class", 2)
+				end
+				return function(a)
+					-- must not have an implementaion
+					if not a[1] then
+						error("Virtual fields must not have an implementation", 2)
+					end
+					local varname = a[1]
+					-- virtual fields cannot override
+					if class.__public[varname] ~= nil or class.__private[varname] ~= nil then
+						error("Cannot make field '" .. varname .. "' virtual as it is already defined here or in a superclass", 2)
+					end
+					-- mark it as a special VIRTUAL value
+					class.__public[varname] = VIRTUAL
+				end
+			elseif k == "private_virtual" then
+				if not class.__abstract then
+					error("Virtual fields can only exist on abstract classes. Use abstract_class instead of class", 2)
+				end
+				return function(a)
+					-- must not have an implementaion
+					if not a[1] then
+						error("Virtual fields must not have an implementation", 2)
+					end
+					local varname = a[1]
+					-- virtual fields cannot override
+					if class.__public[varname] ~= nil or class.__private[varname] ~= nil then
+						error("Cannot make field '" .. varname .. "' virtual as it is already defined here or in a superclass", 2)
+					end
+					-- mark it as a special VIRTUAL value
+					class.__private[varname] = VIRTUAL
+				end
 			end
 
 			return k -- return the key as a string
@@ -222,13 +260,31 @@ function Calcifer_mt:__call(path_to_class)
 	setfenv(0, require_environment)
 	require(path_to_class)
 	setfenv(0, _G)
+
 	-- checking for errors
+
+	-- if we forgot to give the class a name
 	if class.__name == "" then
 		error(
 			"Class in path '" .. path_to_class .. "' needs a name!\n" ..
-			"write 'class \"ClassName\"' in the beginning of the file", 2
+			"write 'class \"ClassName\"' or 'class { ClassName }' in the beginning of the file", 2
 		)
 	end
+
+	-- if the class is not abstract and we forgot to override and virtual inherited fields
+	if not class.__abstract then
+		for varname, value in pairs(class.__public) do
+			if value == VIRTUAL then
+				error("You forgot to override the virtual field '" .. varname .. "' on " .. class.__name)
+			end
+		end
+		for varname, value in pairs(class.__private) do
+			if value == VIRTUAL then
+				error("You forgot to override the virtual field '" .. varname .. "' on " .. class.__name)
+			end
+		end
+	end
+
 	-- all good
 	return class
 end
@@ -329,6 +385,7 @@ function class_mt.__call(class, ...)
 		__public = {},
 		__private = {},
 		__class = class,
+		__internal_mt = nil, -- to be assigned shortly
 	}
 	inst_mt.__index = function(inst, k)
 		-- cannot access instance.self or instance.super externally
@@ -359,6 +416,7 @@ function class_mt.__call(class, ...)
 
 	-- the metatable used for functions within the instance 
 	internal_inst_mt = {}
+	inst_mt.__internal_mt = internal_inst_mt
 	internal_inst_mt.__index = function(inst, k)
 		if k == "self" then
 			return inst
@@ -478,5 +536,28 @@ function Calcifer.import(path)
 	return Calcifer(path)
 end
 
+--=============================================================================
+-- DEBUG FUNCTIONS
+-- TODO: TEST THESE
+--=============================================================================
+-- accesses a private member from anywhere. use this for unit testing private functions
+-- or for debugging
+function Calcifer.getPrivateMember(inst, fieldname)
+	local val = getmetatable(inst).__private[fieldname]
+	if type(val) == "function" then
+		error("Use Calcifer.callPrivateMethod(instance, methodname) to call methods", 2)
+	end
+	return val
+end
+
+-- calls an instance's private method.
+function Calcifer.callPrivateMethod(inst, methodname, ...)
+	local inst_mt = getmetatable(inst)
+	local fn = inst_mt.__private[methodname]
+	if type(fn) ~= "function" then
+		error(inst .. "." .. methodname .. " is not a private method", 2)
+	end
+	return inst_method_call(fn, inst, inst_mt, inst_mt.__internal_mt)(...)
+end
 --=============================================================================
 return Calcifer

@@ -14,7 +14,7 @@ local extend_class
 -- DEFINING A NEW CLASS
 --=============================================================================
 
--- classes are written in a lua module and then required with Calcifer "path/to/classfile"
+-- classes are written in a lua module and then required with Calcifer.import "path/to/classfile"
 function Calcifer_mt:__call(path_to_class)
 	-- classes are memoized by path
 	if CLASS_MEMO[path_to_class] then
@@ -73,9 +73,8 @@ function Calcifer_mt:__call(path_to_class)
 					if k == "final_class" then class.__final = true end
 					if k == "abstract_class" then class.__abstract = true end
 				end
-			end
 			-- private fields only accessible from within that class or descendants
-			if k == "private" then
+			elseif k == "private" then
 				-- why return a function? well how else would you make it such that writing
 				-- private {x = 1}
 				-- can be valid lua code in the required file?
@@ -212,39 +211,48 @@ function Calcifer_mt:__call(path_to_class)
 					end
 
 				end
-			elseif k == "public_virtual" then
+			elseif k == "public_abstract" then
 				if not class.__abstract then
-					error("Virtual fields can only exist on abstract classes. Use abstract_class instead of class", 2)
+					error("Abstract fields can only exist on abstract classes. Use abstract_class instead of class", 2)
 				end
 				return function(a)
 					-- must not have an implementaion
 					if not a[1] then
-						error("Virtual fields must not have an implementation", 2)
+						error("Abstract fields must not have an implementation", 2)
 					end
 					local varname = a[1]
-					-- virtual fields cannot override
+					-- abstract fields cannot override
 					if class.__public[varname] ~= nil or class.__private[varname] ~= nil then
-						error("Cannot make field '" .. varname .. "' virtual as it is already defined here or in a superclass", 2)
+						error("Cannot make field '" .. varname .. "' abstract as it is already defined here or in a superclass", 2)
 					end
 					-- mark it as a special VIRTUAL value
 					class.__public[varname] = VIRTUAL
 				end
-			elseif k == "private_virtual" then
+			elseif k == "private_abstract" then
 				if not class.__abstract then
-					error("Virtual fields can only exist on abstract classes. Use abstract_class instead of class", 2)
+					error("Abstract fields can only exist on abstract classes. Use abstract_class instead of class", 2)
 				end
 				return function(a)
 					-- must not have an implementaion
 					if not a[1] then
-						error("Virtual fields must not have an implementation", 2)
+						error("Abstract fields must not have an implementation", 2)
 					end
 					local varname = a[1]
-					-- virtual fields cannot override
+					-- abstract fields cannot override
 					if class.__public[varname] ~= nil or class.__private[varname] ~= nil then
-						error("Cannot make field '" .. varname .. "' virtual as it is already defined here or in a superclass", 2)
+						error("Cannot make field '" .. varname .. "' abstract as it is already defined here or in a superclass", 2)
 					end
 					-- mark it as a special VIRTUAL value
 					class.__private[varname] = VIRTUAL
+				end
+			elseif k == "interface" then
+				return function(interface_name)
+					print("declaring interface " .. interface_name)
+					return function(t)
+						for k, v in pairs(t) do
+							print(k, v)
+						end
+					end
 				end
 			end
 

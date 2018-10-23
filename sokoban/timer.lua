@@ -1,4 +1,4 @@
-final_class "Timer"
+final_class { Timer }
 --=============================================================================
 private { time = 0 }
 private { mode = "oneshot" }
@@ -8,9 +8,9 @@ public { period = 1 }
 public { running = true }
 
 --=============================================================================
-public { new = function(_period, _mode) 
-	period = _period or period
-	mode = _mode or mode
+public { new = function(period, mode) 
+	self.period = period or self.period
+	self.mode = mode or self.mode
 end }
 
 --=============================================================================

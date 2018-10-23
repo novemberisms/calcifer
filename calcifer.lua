@@ -81,68 +81,65 @@ function Calcifer_mt:__call(path_to_class)
 				-- here, 'a' is the table {x = 1}
 				return function(a)
 					-- private {some_var_with_no_initial_value}
-					if a[1] then
-						-- this only works because of the line at the end `return k`
-						local varname = a[1]
+					for _, varname in ipairs(a) do
 						if varname == "new" then error("Must provide a constructor implementation", 2) end
 						if class.__private[varname] ~= nil or class.__public[varname] ~= nil then	
-							error("Cannot redefine field '" .. varname .. "' as it is already defined here or in a parent. Use private_override {}", 2)
+							error("Cannot redefine field '" .. varname .. "' as it is already defined here or in a parent. Try using private_override {}?", 2)
 						end
 						class.__private[varname] = UNDEFINED
-						return
 					end
 					-- private {a = 1, b = 2}
 					for k, v in pairs(a) do
-						if class.__private[k] ~= nil or class.__public[k] ~= nil then
-							if k ~= "new" then
-								error("Cannot redefine field '" .. k .. "' as it is already defined here or in a parent. Use private_override {}", 2)
+						if type(k) ~= "number" then
+							if class.__private[k] ~= nil or class.__public[k] ~= nil then
+								if k ~= "new" then
+									error("Cannot redefine field '" .. k .. "' as it is already defined here or in a parent. Try using private_override {}?", 2)
+								end
 							end
+							class.__private[k] = v
 						end
-						class.__private[k] = v
 					end
 				end
 			-- public fields available outside
 			elseif k == "public" then
 				return function(a)
 					-- public {some_var_with_no_initial_value}
-					if a[1] then
-						-- this only works because of the line at the end `return k`
-						local varname = a[1] 
+					for _, varname in ipairs(a) do
 						if varname == "new" then error("Must provide a constructor implementation", 2) end
 						if class.__private[varname] ~= nil or class.__public[varname] ~= nil then
-							error("Cannot redefine field '" .. varname .. "' as it is already defined here or in a parent. Use public_override {}", 2)
+							error("Cannot redefine field '" .. varname .. "' as it is already defined here or in a parent. Try using public_override {}?", 2)
 						end
 						class.__public[varname] = UNDEFINED                
-						return                                                     
 					end
 					-- public {a = 1, b = 2}
 					for k, v in pairs(a) do
-						if class.__private[k] ~= nil or class.__public[k] ~= nil then
-							if k ~= "new" then
-								error("Cannot redefine field '" .. k .. "' as it is already defined here or in a parent. Use public_override {}", 2)
+						if type(k) ~= "number" then
+							if class.__private[k] ~= nil or class.__public[k] ~= nil then
+								if k ~= "new" then
+									error("Cannot redefine field '" .. k .. "' as it is already defined here or in a parent. Try using public_override {}?", 2)
+								end
 							end
+							class.__public[k] = v
 						end
-						class.__public[k] = v
 					end
 				end
 			-- fields only available to the capital C Class itself
 			elseif k == "static" then
 				return function(a)
-					if a[1] then
-						local varname = a[1]
+					for _, varname in ipairs(a) do
 						class.__static[varname] = UNDEFINED
-						return
 					end
 					for k, v in pairs(a) do
-						class.__static[k] = v
+						if type(k) ~= "number" then
+							class.__static[k] = v
+						end
 					end
 				end
 			-- overriding a public field that already exists in a parent
 			elseif k == "public_override" then
 				return function(a)
 					-- of the case public_override {uninitialized}
-					if a[1] then
-						local varname = a[1]
+					for _, varname in ipairs(a) do
 						-- you do not need to specify overriding new ( and you can't uninitialize new anyways )
 						if varname == "new" then error("No need to use override for constructor (this is a special case)", 2) end
 						-- are you accidentally overriding a private field as public?
@@ -156,23 +153,24 @@ function Calcifer_mt:__call(path_to_class)
 							error("Trying to override field " .. varname .. " that does not exist in a superclass", 2)
 						end
 						class.__public[varname] = UNDEFINED
-						return
 					end
 					-- of the case public_override {a = 1, b = 2}
 					for k, v in pairs(a) do
-						-- you do not need to specify overriding new
-						if k == "new" then error("No need to use override for constructor (this is a special case)", 2) end
-						-- are you accidentally overriding a private field as public?
-						if class.__private[k] ~= nil then
-							-- you can override a private field as public
+						if type(k) ~= "number" then
+							-- you do not need to specify overriding new
+							if k == "new" then error("No need to use override for constructor (this is a special case)", 2) end
+							-- are you accidentally overriding a private field as public?
+							if class.__private[k] ~= nil then
+								-- you can override a private field as public
+								class.__public[k] = v
+								class.__private[k] = nil
+							end
+							-- does it even exist?
+							if class.__public[k] == nil then
+								error("Trying to override field " .. k .. " that does not exist in a superclass", 2)
+							end
 							class.__public[k] = v
-							class.__private[k] = nil
 						end
-						-- does it even exist?
-						if class.__public[k] == nil then
-							error("Trying to override field " .. k .. " that does not exist in a superclass", 2)
-						end
-						class.__public[k] = v
 					end
 
 				end
@@ -180,8 +178,7 @@ function Calcifer_mt:__call(path_to_class)
 			elseif k == "private_override" then
 				return function(a)
 					-- of the case private_override {uninitialized}
-					if a[1] then
-						local varname = a[1]
+					for _, varname in ipairs(a) do
 						-- you do not need to specify overriding new ( and you can't uninitialize new anyways )
 						if varname == "new" then error("No need to use override for constructor (this is a special case)", 2) end
 						-- are you accidentally overriding a public field as private?
@@ -193,57 +190,60 @@ function Calcifer_mt:__call(path_to_class)
 							error("Trying to override field " .. varname .. " that does not exist in a superclass", 2)
 						end
 						class.__private[varname] = UNDEFINED
-						return
 					end
 					-- of the case private_override {a = 1, b = 2}
 					for k, v in pairs(a) do
-						-- you do not need to specify overriding new
-						if k == "new" then error("No need to use override for constructor (this is a special case)", 2) end
-						-- are you accidentally overriding a public field as private?
-						if class.__public[k] ~= nil then
-							error("Cannot override a public field as private [" .. k .. "]", 2)
+						if type(k) ~= "number" then
+							-- you do not need to specify overriding new
+							if k == "new" then error("No need to use override for constructor (this is a special case)", 2) end
+							-- are you accidentally overriding a public field as private?
+							if class.__public[k] ~= nil then
+								error("Cannot override a public field as private [" .. k .. "]", 2)
+							end
+							-- does it even exist?
+							if class.__private[k] == nil then
+								error("Trying to override field " .. k .. " that does not exist in a superclass", 2)
+							end
+							class.__private[k] = v
 						end
-						-- does it even exist?
-						if class.__private[k] == nil then
-							error("Trying to override field " .. k .. " that does not exist in a superclass", 2)
-						end
-						class.__private[k] = v
 					end
 
 				end
 			elseif k == "public_abstract" then
 				if not class.__abstract then
-					error("Abstract fields can only exist on abstract classes. Use abstract_class instead of class", 2)
+					error("Abstract fields can only exist on abstract classes. Use abstract_class instead of class?", 2)
 				end
 				return function(a)
 					-- must not have an implementaion
 					if not a[1] then
-						error("Abstract fields must not have an implementation", 2)
+						error("Abstract fields can't have an implementation", 2)
 					end
-					local varname = a[1]
-					-- abstract fields cannot override
-					if class.__public[varname] ~= nil or class.__private[varname] ~= nil then
-						error("Cannot make field '" .. varname .. "' abstract as it is already defined here or in a superclass", 2)
+					for _, varname in ipairs(a) do
+						-- abstract fields cannot override
+						if class.__public[varname] ~= nil or class.__private[varname] ~= nil then
+							error("Cannot make field '" .. varname .. "' abstract as it is already defined here or in a superclass", 2)
+						end
+						-- mark it as a special VIRTUAL value
+						class.__public[varname] = VIRTUAL
 					end
-					-- mark it as a special VIRTUAL value
-					class.__public[varname] = VIRTUAL
 				end
 			elseif k == "private_abstract" then
 				if not class.__abstract then
-					error("Abstract fields can only exist on abstract classes. Use abstract_class instead of class", 2)
+					error("Abstract fields can only exist in abstract classes. Use abstract_class instead of class?", 2)
 				end
 				return function(a)
 					-- must not have an implementaion
 					if not a[1] then
-						error("Abstract fields must not have an implementation", 2)
+						error("Abstract fields can't have an implementation", 2)
 					end
-					local varname = a[1]
-					-- abstract fields cannot override
-					if class.__public[varname] ~= nil or class.__private[varname] ~= nil then
-						error("Cannot make field '" .. varname .. "' abstract as it is already defined here or in a superclass", 2)
+					for _, varname in ipairs(a) do
+						-- abstract fields cannot override
+						if class.__public[varname] ~= nil or class.__private[varname] ~= nil then
+							error("Cannot make field '" .. varname .. "' abstract as it is already defined here or in a superclass", 2)
+						end
+						-- mark it as a special VIRTUAL value
+						class.__private[varname] = VIRTUAL
 					end
-					-- mark it as a special VIRTUAL value
-					class.__private[varname] = VIRTUAL
 				end
 			elseif k == "interface" then
 				return function(interface_name)
@@ -262,7 +262,7 @@ function Calcifer_mt:__call(path_to_class)
 		-- when within the required class file, toplevel code like 'hi = 123' will not work
 		-- but you can still use toplevel local vars like 'local hi = 123' 
 		__newindex = function(class, k, v)
-			error("Use [private | public | static] {" .. k .. " = " .. tostring(v) .. "} to declare", 2)
+			error("Class declaration, field declaration, or local statement expected. Use [private | public | public_static | private_static | ...] {" .. k .. " = " .. tostring(v) .. "} or local _ [= _] to declare", 2)
 		end
 	})
 	setfenv(0, require_environment)
@@ -275,7 +275,7 @@ function Calcifer_mt:__call(path_to_class)
 	if class.__name == "" then
 		error(
 			"Class in path '" .. path_to_class .. "' needs a name!\n" ..
-			"write 'class \"ClassName\"' or 'class { ClassName }' in the beginning of the file", 2
+			"write 'class \"ClassName\"' or 'class { ClassName }' at the beginning of the file", 2
 		)
 	end
 
@@ -516,10 +516,10 @@ function class_mt.__call(class, ...)
 			local constructor = class.__private.new
 			inst_method_call(constructor, inst, inst_mt, internal_inst_mt)(...)
 		else
-			error("Cannot instantiate " .. class.__name .. " because its constructor is private", 2)
+			error("Cannot instantiate " .. class.__name .. " from here because its constructor is private", 2)
 		end
 	else
-		error("Cannot instantiate " .. class.__name .. " because it does not have a public constructor", 2)
+		error("Cannot instantiate " .. class.__name .. " because it does not have a constructor", 2)
 	end
 
 	return inst
@@ -546,7 +546,6 @@ end
 
 --=============================================================================
 -- DEBUG FUNCTIONS
--- TODO: TEST THESE
 --=============================================================================
 -- accesses a private member from anywhere. use this for unit testing private functions
 -- or for debugging

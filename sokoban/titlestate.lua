@@ -1,5 +1,6 @@
-local GameState = import "sokoban/gamestate"
-local FadeEffect = import "sokoban/fade_effect"
+local Game = import "game"
+local GameState = import "gamestate"
+local FadeEffect = import "fade_effect"
 local graphics = love.graphics
 
 --=============================================================================
@@ -10,7 +11,6 @@ private { title_font }
 private { menu_font }
 private { title_y }
 private { fade_effect }
-
 --=============================================================================
 public { new = function() 
 	title_font = graphics.newFont(32)
@@ -31,7 +31,6 @@ end }
 --=============================================================================
 public_override { update = function(dt) 
 	if fade_effect.update(dt) then
-		local Game = import "sokoban/game"
 		Game.getInstance().setState("play")
 	end
 end }
@@ -46,6 +45,10 @@ public_override { draw = function()
 end }
 
 --=============================================================================
-public_override { keypressed = function() 
-	fade_effect.fadeOut(1.5, {0, 0, 0})
+public_override { keypressed = function(key)
+	if key == "space" then 
+		fade_effect.fadeOut(1.5, {0, 0, 0})
+	elseif key == "escape" then
+		love.event.quit()
+	end
 end }

@@ -1,7 +1,9 @@
+local Calcifer = require "../calcifer"
+import = Calcifer.import
 local game
 --=============================================================================
 function love.load()
-	local Game = import "sokoban/game"
+	local Game = import "game"
 	game = Game.getInstance()
 end
 

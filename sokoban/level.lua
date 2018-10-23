@@ -1,4 +1,4 @@
-class "Level"
+final_class { Level }
 
 private { tiles }
 

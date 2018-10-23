@@ -1,7 +1,7 @@
-local TitleState = import "sokoban/titlestate"
-local PlayState = import "sokoban/playstate"
+local TitleState = import "titlestate"
+local PlayState = import "playstate"
 --=============================================================================
-final_class "Game"
+final_class { Game }
 --=============================================================================
 -- using the singleton pattern to ensure there is only one game instance
 static { instance }

@@ -29,7 +29,6 @@ public_override { update = function(dt)
 		fade_effect.update(dt)
 		return
 	end
-
 end }
 
 --=============================================================================
@@ -41,5 +40,7 @@ end }
 
 --=============================================================================
 public_override { keypressed = function(key) 
-
+	if key == "escape" then 
+		love.event.quit() 
+	end
 end }

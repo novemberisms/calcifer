@@ -36,6 +36,9 @@ function Calcifer_mt:__call(path_to_class)
 	-- will return the exact same table created here
 	CLASS_MEMO[path_to_class] = class
 
+	-- contains the names of fields required by any interfaces the class implements
+	local interface_fields = {}
+
 	-- this is the environment for the required class file
 	-- it has a special anonymous metatable
 	local require_environment = setmetatable({}, {
@@ -245,12 +248,11 @@ function Calcifer_mt:__call(path_to_class)
 						class.__private[varname] = VIRTUAL
 					end
 				end
-			elseif k == "interface" then
-				return function(interface_name)
-					print("declaring interface " .. interface_name)
-					return function(t)
-						for k, v in pairs(t) do
-							print(k, v)
+			elseif k == "implements" then
+				return function(a)
+					for _, interface in ipairs(a) do
+						for _, field in ipairs(interface) do
+							table.insert(interface_fields, field)
 						end
 					end
 				end
@@ -278,17 +280,26 @@ function Calcifer_mt:__call(path_to_class)
 			"write 'class \"ClassName\"' or 'class { ClassName }' at the beginning of the file", 2
 		)
 	end
+	-- check that all required interface methods and properties are provided
+	for _, varname in ipairs(interface_fields) do
+		if class.__private[varname] ~= nil then
+			error("Interface fields must be declared public. [" .. varname .. "]", 2)
+		end
+		if class.__public[varname] == nil then
+			error("You forgot to provide a public implementation for the interface field '" .. varname .. "'", 2)
+		end
+	end
 
 	-- if the class is not abstract and we forgot to override and virtual inherited fields
 	if not class.__abstract then
 		for varname, value in pairs(class.__public) do
 			if value == VIRTUAL then
-				error("You forgot to override the virtual field '" .. varname .. "' on " .. class.__name)
+				error("You forgot to override the virtual field '" .. varname .. "' on " .. class.__name, 2)
 			end
 		end
 		for varname, value in pairs(class.__private) do
 			if value == VIRTUAL then
-				error("You forgot to override the virtual field '" .. varname .. "' on " .. class.__name)
+				error("You forgot to override the virtual field '" .. varname .. "' on " .. class.__name, 2)
 			end
 		end
 	end
@@ -538,6 +549,24 @@ function Calcifer.is(instance, class)
 		current = current.__parent
 	until current == UNDEFINED
 	return false
+end
+
+function Calcifer.doesImplement(instance, interface)
+	local class_publics = getmetatable(instance).__class.__public 
+	for _, field in ipairs(interface) do
+		if class_publics[field] == nil then
+			return false
+		end
+	end
+	return true
+end
+
+function Calcifer.hasMethod(instance, methodname)
+
+end
+
+function Calcifer.hasField()
+
 end
 
 function Calcifer.import(path)

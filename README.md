@@ -92,4 +92,15 @@ local SomeClass = require("path/to/calcifer").import("path/to/someclass")
 
 # Usage
 
-TODO
+TODO: go into detail about all the features of the library. Including
+
+* visibility
+* overriding
+* static fields
+* abstract classes and abstract fields
+* final classes
+* using super and self
+* interfaces
+* reflection and debug api
+
+TODO: finish the sample sokoban game

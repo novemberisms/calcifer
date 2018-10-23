@@ -131,7 +131,7 @@ function Calcifer_mt:__call(path_to_class)
 					if a[1] then
 						local varname = a[1]
 						class.__static[varname] = UNDEFINED
-						-- error("Must provide an initial value for static field: " .. a[1], 2)
+						return
 					end
 					for k, v in pairs(a) do
 						class.__static[k] = v

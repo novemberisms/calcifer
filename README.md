@@ -49,7 +49,7 @@ import = Calcifer.import
 
 and that's it! We're basically declaring a global function called `import` for convenience. 
 
-You can now start writing calcifer classes and instantiating them like so:
+You can now start writing calcifer classes and instantiating them.
 
 ## Writing a Calcifer class
 

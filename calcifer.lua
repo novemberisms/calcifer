@@ -264,7 +264,10 @@ function Calcifer_mt:__call(path_to_class)
 		-- when within the required class file, toplevel code like 'hi = 123' will not work
 		-- but you can still use toplevel local vars like 'local hi = 123' 
 		__newindex = function(class, k, v)
-			error("Class declaration, field declaration, or local statement expected. Use [private | public | public_static | private_static | ...] {" .. k .. " = " .. tostring(v) .. "} or local _ [= _] to declare", 2)
+			error(
+				"Class declaration, field declaration, or local statement expected. " ..
+				"Use '[private | public | public_static | private_static | ...] {" .. k .. " = " .. tostring(v) .. "}'' " .. 
+				"or 'local " .. k .. " = " .. tostring(v) "' to declare", 2)
 		end
 	})
 	setfenv(0, require_environment)
@@ -276,7 +279,7 @@ function Calcifer_mt:__call(path_to_class)
 	-- if we forgot to give the class a name
 	if class.__name == "" then
 		error(
-			"Class in path '" .. path_to_class .. "' needs a name!\n" ..
+			"The class in path '" .. path_to_class .. "' needs a name!\n" ..
 			"write 'class \"ClassName\"' or 'class { ClassName }' at the beginning of the file", 2
 		)
 	end
@@ -562,11 +565,14 @@ function Calcifer.doesImplement(instance, interface)
 end
 
 function Calcifer.hasMethod(instance, methodname)
-
+	local class_publics = getmetatable(instance).__class.__public
+	return type(class_publics[methodname]) == "function"
 end
 
-function Calcifer.hasField()
-
+function Calcifer.hasField(instance, fieldname)
+	local class_publics = getmetatable(instance).__class.__public
+	if class_publics[fieldname] == nil then return false end
+	return type(class_publics[methodname]) ~= "function"
 end
 
 function Calcifer.import(path)
